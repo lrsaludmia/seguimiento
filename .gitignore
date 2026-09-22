@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+Thumbs.db
+.DS_Store
+
+# Nunca subir la API key (vive en la variable de entorno LINEAR_API_KEY)
+*.env
+.env
+
+# Artefactos pesados del proyecto de diseño (no necesarios para publicar)
+Tablero de seguimiento Linear/scraps/
+Tablero de seguimiento Linear/uploads/
+Tablero de seguimiento Linear/.thumbnail

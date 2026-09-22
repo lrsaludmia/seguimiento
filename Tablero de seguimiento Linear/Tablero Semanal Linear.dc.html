@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="ds/styles.css">
+<script src="ds/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #f7f7f6; font-family: "Ubuntu", "Segoe UI", system-ui, sans-serif; }
+  a { color: #628a2a; text-decoration: none; }
+  a:hover { color: #4c6b21; text-decoration: underline; }
+  *, *::before, *::after { box-sizing: border-box; }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f7f7f6;color:#232527;font-family:'Ubuntu','Segoe UI',system-ui,sans-serif;padding-bottom:3rem">
+
+  <header style="background:#79a834;color:#ffffff;padding:1rem clamp(1rem,4vw,2rem) 1.25rem">
+    <div style="max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem 1rem">
+      <x-import component-from-global-scope="SaludMiaDS.Logo" from="./ds/_ds_bundle.js" variante="simbolo" tono="blanco" alto="36px" hint-size="36px,36px" style="height:36px;width:auto;flex:0 0 auto"></x-import>
+      <div style="display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0">
+        <span style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">Fundación SaludMía EPS</span>
+        <h1 style="margin:0;font-size:clamp(1.125rem,4.5vw,1.5rem);line-height:1.2;font-weight:700">Tablero de seguimiento semanal</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.35);border-radius:9999px;padding:0.375rem 0.875rem;font-size:0.875rem;font-weight:700">
+        <span style="width:8px;height:8px;border-radius:9999px;background:#ffffff;display:inline-block"></span>
+        <span>{{ cicloLabel }}</span>
+      </div>
+    </div>
+    <div style="max-width:1120px;margin:0.75rem auto 0;display:flex;flex-wrap:wrap;gap:0.375rem 1.25rem;font-size:0.8125rem;opacity:0.92">
+      <span>Fuente: Linear</span>
+      <span>{{ rangoFechas }}</span>
+      <span>Día {{ diaActual }} de 15</span>
+      <span>Actualizado {{ actualizado }}</span>
+    </div>
+  </header>
+
+  <main style="max-width:1120px;margin:0 auto;padding:clamp(1rem,4vw,1.75rem) clamp(1rem,4vw,2rem);display:flex;flex-direction:column;gap:clamp(1.25rem,4vw,2rem)">
+
+    <section style="display:flex;flex-direction:column;gap:0.875rem">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <h2 style="margin:0;font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Estado de avance vs. planeación</h2>
+        <p style="margin:0;font-size:0.875rem;color:#6d6f72">Cuántas tareas hay planeadas, en curso y finalizadas en el ciclo.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div class="sm-card" style="padding:0.875rem 1rem;display:flex;flex-direction:column;gap:0.375rem;border-left:4px solid;border-left-color:{{ k.color }};background:#ffffff">
+            <span style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#6d6f72">{{ k.label }}</span>
+            <span style="font-size:clamp(1.75rem,7vw,2.25rem);font-weight:700;line-height:1;color:{{ k.color }}">{{ k.value }}</span>
+            <span style="font-size:0.8125rem;color:#6d6f72;line-height:1.4">{{ k.hint }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.75rem;background:#ffffff">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+          <span style="font-size:0.875rem;font-weight:700">Avance real</span>
+          <span style="font-size:0.8125rem;color:#6d6f72">Esperado a hoy: {{ esperadoPct }}%</span>
+        </div>
+        <div style="position:relative;height:14px;border-radius:9999px;background:#f0efed;overflow:hidden">
+          <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:#79a834;width:{{ avanceW }}"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 0.75rem">
+          <span style="font-size:1.25rem;font-weight:700;line-height:1">{{ avancePct }}%</span>
+          <span class="sm-badge sm-badge--soft" style="font-size:0.75rem">{{ desviacionTexto }}</span>
+        </div>
+      </div>
+    </section>
+
+    <sc-if value="{{ mostrarCronologia }}" hint-placeholder-val="{{ true }}">
+    <section style="display:flex;flex-direction:column;gap:0.875rem">
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="margin:0;font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Cronología del ciclo</h2>
+          <p style="margin:0;font-size:0.875rem;color:#6d6f72">Día 1 al día 15 — cada barra es una tarea.</p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem 0.875rem">
+          <sc-for list="{{ leyenda }}" as="l" hint-placeholder-count="3">
+            <span style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:#54565a">
+              <span style="width:10px;height:10px;border-radius:3px;display:inline-block;background:{{ l.color }}"></span>{{ l.label }}
+            </span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div class="sm-card" style="padding:0.875rem;background:#ffffff">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <div style="min-width:560px;display:flex;flex-direction:column;gap:0.5rem;padding-bottom:0.25rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#6d6f72;font-weight:700">
+              <span>Día 1 · {{ fechaInicio }}</span>
+              <span>Día 15 · {{ fechaFin }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:150px 1fr 86px;gap:0.25rem 0.75rem;align-items:center">
+              <span></span>
+              <div style="position:relative;height:6px;border-radius:9999px;background:#dad6d3">
+                <div style="position:absolute;top:-4px;bottom:-4px;width:2px;background:#cf3b3b;left:{{ hoyLeft }}"></div>
+              </div>
+              <span></span>
+              <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="6">
+                <span style="font-size:0.8125rem;color:#232527;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.titulo }}</span>
+                <div style="position:relative;height:22px;border-radius:6px;background:#f7f7f6">
+                  <div style="position:absolute;top:0;bottom:0;width:2px;background:rgba(207,59,59,0.45);left:{{ hoyLeft }}"></div>
+                  <div style="position:absolute;top:3px;bottom:3px;border-radius:5px;display:flex;align-items:center;padding:0 0.5rem;font-size:0.6875rem;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;background:{{ t.color }};left:{{ t.left }};width:{{ t.width }}">{{ t.dias }}</div>
+                </div>
+                <span style="font-size:0.75rem;color:#6d6f72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.responsable }}</span>
+              </sc-for>
+              <span></span>
+              <div style="position:relative;height:14px;font-size:0.6875rem;color:#a9a8a7">
+                <sc-for list="{{ ticks }}" as="d" hint-placeholder-count="4">
+                  <span style="position:absolute;top:0;transform:translateX(-50%);left:{{ d.left }}">{{ d.label }}</span>
+                </sc-for>
+              </div>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <section style="display:flex;flex-direction:column;gap:0.875rem">
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="margin:0;font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Tareas por responsable</h2>
+          <p style="margin:0;font-size:0.875rem;color:#6d6f72">Mismas métricas para todo el equipo. Meta de resolución: {{ metaTexto }}.</p>
+        </div>
+        <span style="font-size:0.8125rem;color:#6d6f72">Orden: {{ ordenTexto }}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0.75rem">
+        <sc-for list="{{ responsables }}" as="r" hint-placeholder-count="3">
+          <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.875rem;background:#ffffff">
+            <div style="display:flex;align-items:center;gap:0.625rem">
+              <span style="width:36px;height:36px;flex:0 0 36px;border-radius:9999px;background:#e3efd2;color:#4c6b21;display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:700">{{ r.iniciales }}</span>
+              <span style="font-size:1rem;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.nombre }}</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;text-align:center">
+              <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#f7f7f6">
+                <span style="font-size:1.125rem;font-weight:700;line-height:1">{{ r.planeadas }}</span>
+                <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">Planeadas</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#eaf4e0">
+                <span style="font-size:1.125rem;font-weight:700;line-height:1;color:#4c8a2a">{{ r.finalizadas }}</span>
+                <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">Finalizadas</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#e8f0f9">
+                <span style="font-size:1.125rem;font-weight:700;line-height:1;color:#2f6fb0">{{ r.curso }}</span>
+                <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">En curso</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:0.375rem">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem">
+                <span style="font-size:0.8125rem;color:#54565a">% resolución</span>
+                <span style="font-size:0.9375rem;font-weight:700;color:{{ r.resColor }}">{{ r.resolucion }}%</span>
+              </div>
+              <div style="position:relative;height:8px;border-radius:9999px;background:#f0efed;overflow:hidden">
+                <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:{{ r.resFill }};width:{{ r.resW }}"></div>
+              </div>
+              <span style="font-size:0.75rem;color:#6d6f72">Finalizadas ÷ planeadas</span>
+            </div>
+
+            <sc-if value="{{ mostrarEsfuerzo }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;padding-top:0.75rem;border-top:1px solid #f0efed">
+                <span style="font-size:0.8125rem;color:#54565a">Esfuerzo por ciclo</span>
+                <span style="font-size:0.9375rem;font-weight:700">{{ r.esfuerzo }}</span>
+              </div>
+              <span style="font-size:0.75rem;color:#6d6f72;margin-top:-0.5rem">Total días tarea ÷ 10 · {{ r.diasTotales }} días</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:0.875rem">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <h2 style="margin:0;font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Top 5 proyectos con más tareas</h2>
+        <p style="margin:0;font-size:0.875rem;color:#6d6f72">Cantidad de tareas asignadas en el ciclo.</p>
+      </div>
+      <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.875rem;background:#ffffff">
+        <sc-for list="{{ proyectos }}" as="p" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:0.375rem">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem">
+              <span style="font-size:0.875rem;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.nombre }}</span>
+              <span style="font-size:0.875rem;font-weight:700;color:#628a2a">{{ p.cantidad }}</span>
+            </div>
+            <div style="position:relative;height:20px;border-radius:6px;background:#f7f7f6;overflow:hidden">
+              <div style="position:absolute;inset:0 auto 0 0;border-radius:6px;background:#90bf57;width:{{ p.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+        <span style="font-size:0.75rem;color:#a9a8a7">Cantidad de tareas</span>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:0.875rem">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <h2 style="margin:0;font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Salud de datos y proceso</h2>
+        <p style="margin:0;font-size:0.875rem;color:#6d6f72">Calidad del registro en Linear. Verde = sano; rojo = requiere corrección (poca cobertura o muchos vacíos).</p>
+      </div>
+      <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:1rem;background:#ffffff">
+        <sc-for list="{{ salud }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:0.375rem">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem">
+              <span style="font-size:0.875rem;min-width:0;line-height:1.3">{{ s.label }}</span>
+              <span style="display:flex;align-items:baseline;gap:0.375rem;white-space:nowrap">
+                <span style="font-size:0.9375rem;font-weight:700;color:{{ s.color }}">{{ s.pct }}</span>
+                <span style="font-size:0.75rem;color:#a9a8a7">{{ s.detalle }}</span>
+              </span>
+            </div>
+            <div style="position:relative;height:8px;border-radius:9999px;background:#f0efed;overflow:hidden">
+              <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:{{ s.color }};width:{{ s.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cicloLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ciclo 24&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;metaResolucion&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:80,&quot;min&quot;:50,&quot;max&quot;:100,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;ordenResponsables&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Resolución&quot;,&quot;options&quot;:[&quot;Resolución&quot;,&quot;Carga&quot;,&quot;Nombre&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;mostrarCronologia&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;mostrarEsfuerzo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const COLORES = {
+  finalizada: "#4c8a2a",
+  curso: "#2f6fb0",
+  planeada: "#888b8e"
+};
+
+const TAREAS = [
+  { titulo: "Ficha fuente RIPS", resp: "Fabián Ruiz", proyecto: "Perfil epidemiológico", estado: "finalizada", d1: 1, d2: 3 },
+  { titulo: "Modelo de datos afiliados", resp: "Fabián Ruiz", proyecto: "Perfil epidemiológico", estado: "finalizada", d1: 2, d2: 5 },
+  { titulo: "Sección morbilidad", resp: "Fabián Ruiz", proyecto: "Perfil epidemiológico", estado: "curso", d1: 6, d2: 10 },
+  { titulo: "Validación indicadores", resp: "Fabián Ruiz", proyecto: "Tablero de indicadores", estado: "curso", d1: 8, d2: 11 },
+  { titulo: "Anexo técnico Supersalud", resp: "Fabián Ruiz", proyecto: "Reportes normativos", estado: "planeada", d1: 12, d2: 15 },
+  { titulo: "Carga histórica 2024", resp: "Fabián Ruiz", proyecto: "Migración bodega", estado: "planeada", d1: 11, d2: 14 },
+
+  { titulo: "ETL autorizaciones", resp: "Leonardo Gómez", proyecto: "Migración bodega", estado: "finalizada", d1: 1, d2: 4 },
+  { titulo: "Depuración duplicados", resp: "Leonardo Gómez", proyecto: "Migración bodega", estado: "finalizada", d1: 3, d2: 6 },
+  { titulo: "Tablero cohortes crónicos", resp: "Leonardo Gómez", proyecto: "Tablero de indicadores", estado: "curso", d1: 7, d2: 12 },
+  { titulo: "Diccionario de datos", resp: "Leonardo Gómez", proyecto: "Perfil epidemiológico", estado: "planeada", d1: 10, d2: 13 },
+  { titulo: "Pruebas de calidad", resp: "Leonardo Gómez", proyecto: "Calidad del dato", estado: "planeada", d1: 13, d2: 15 },
+
+  { titulo: "Malla de validación", resp: "Luis Carlos Peña", proyecto: "Calidad del dato", estado: "finalizada", d1: 1, d2: 2 },
+  { titulo: "Reglas de negocio PYMS", resp: "Luis Carlos Peña", proyecto: "Calidad del dato", estado: "finalizada", d1: 2, d2: 6 },
+  { titulo: "Automatizar perfil en Word", resp: "Luis Carlos Peña", proyecto: "Perfil epidemiológico", estado: "finalizada", d1: 5, d2: 8 },
+  { titulo: "Conector Linear", resp: "Luis Carlos Peña", proyecto: "Tablero de indicadores", estado: "curso", d1: 8, d2: 12 },
+  { titulo: "Informe mensual EPS", resp: "Luis Carlos Peña", proyecto: "Reportes normativos", estado: "planeada", d1: 12, d2: 15 },
+  { titulo: "Revisión de glosas", resp: "Luis Carlos Peña", proyecto: "Reportes normativos", estado: "planeada", d1: 13, d2: 15 }
+];
+
+const DIA_ACTUAL = 9;
+
+// Interpola magenta (#a500b2) → verde marca (#79a834) según el % de resolución.
+function mezclaMagentaVerde(pct) {
+  const t = Math.max(0, Math.min(100, pct)) / 100;
+  const a = [0xa5, 0x00, 0xb2], b = [0x79, 0xa8, 0x34];
+  const c = a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  return "rgb(" + c.join(", ") + ")";
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const meta = Number(this.props.metaResolucion ?? 80);
+    const orden = this.props.ordenResponsables ?? "Resolución";
+    const total = TAREAS.length;
+    const fin = TAREAS.filter(t => t.estado === "finalizada").length;
+    const cur = TAREAS.filter(t => t.estado === "curso").length;
+    const pla = TAREAS.filter(t => t.estado === "planeada").length;
+    const avancePct = Math.round((fin / total) * 100);
+    const esperadoPct = Math.round((DIA_ACTUAL / 15) * 100);
+    const delta = avancePct - esperadoPct;
+
+    const nombres = [...new Set(TAREAS.map(t => t.resp))];
+    let responsables = nombres.map(n => {
+      const suyas = TAREAS.filter(t => t.resp === n);
+      const f = suyas.filter(t => t.estado === "finalizada").length;
+      const c = suyas.filter(t => t.estado === "curso").length;
+      const dias = suyas.reduce((a, t) => a + (t.d2 - t.d1 + 1), 0);
+      const res = Math.round((f / suyas.length) * 100);
+      return {
+        nombre: n,
+        iniciales: n.split(" ").slice(0, 2).map(w => w[0]).join(""),
+        planeadas: suyas.length,
+        finalizadas: f,
+        curso: c,
+        resolucion: res,
+        resW: res + "%",
+        resColor: mezclaMagentaVerde(res),
+        resFill: "linear-gradient(90deg, #a500b2 0%, " + mezclaMagentaVerde(res) + " 100%)",
+        diasTotales: dias,
+        esfuerzo: (dias / 10).toFixed(1) + "×"
+      };
+    });
+    if (orden === "Resolución") responsables.sort((a, b) => b.resolucion - a.resolucion);
+    if (orden === "Carga") responsables.sort((a, b) => b.planeadas - a.planeadas);
+    if (orden === "Nombre") responsables.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    const conteo = {};
+    TAREAS.forEach(t => { conteo[t.proyecto] = (conteo[t.proyecto] || 0) + 1; });
+    const lista = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const max = lista[0] ? lista[0][1] : 1;
+
+    return {
+      cicloLabel: this.props.cicloLabel ?? "Ciclo 24",
+      rangoFechas: "14 – 28 sep 2026",
+      fechaInicio: "14 sep",
+      fechaFin: "28 sep",
+      actualizado: "hoy 7:30 a. m.",
+      diaActual: DIA_ACTUAL,
+      mostrarCronologia: this.props.mostrarCronologia ?? true,
+      mostrarEsfuerzo: this.props.mostrarEsfuerzo ?? true,
+      metaTexto: meta + "%",
+      ordenTexto: orden,
+      kpis: [
+        { label: "Finalizadas", value: fin, color: COLORES.finalizada, hint: "Cerradas en el ciclo" },
+        { label: "En curso", value: cur, color: COLORES.curso, hint: "Con avance hoy" },
+        { label: "Planeadas", value: pla, color: COLORES.planeada, hint: "Aún sin iniciar" },
+        { label: "Totales", value: total, color: "#232527", hint: "Tareas del ciclo" }
+      ],
+      avancePct,
+      avanceW: avancePct + "%",
+      esperadoPct,
+      desviacionTexto: delta >= 0 ? "+" + delta + " pts sobre lo esperado" : delta + " pts bajo lo esperado",
+      leyenda: [
+        { label: "Finalizada", color: COLORES.finalizada },
+        { label: "En curso", color: COLORES.curso },
+        { label: "Planeada", color: COLORES.planeada }
+      ],
+      hoyLeft: ((DIA_ACTUAL - 1) / 15) * 100 + "%",
+      ticks: [1, 5, 10, 15].map(d => ({ label: String(d), left: ((d - 0.5) / 15) * 100 + "%" })),
+      timeline: TAREAS.map(t => ({
+        titulo: t.titulo,
+        responsable: t.resp.split(" ")[0],
+        color: COLORES[t.estado],
+        dias: "d" + t.d1 + "–" + t.d2,
+        left: ((t.d1 - 1) / 15) * 100 + "%",
+        width: ((t.d2 - t.d1 + 1) / 15) * 100 + "%"
+      })),
+      responsables,
+      salud: [
+        { label: "Con estimación", n: 6, d: total, sentido: "cobertura" },
+        { label: "Con etiqueta de tipo (Doble Carril)", n: 4, d: total, sentido: "cobertura" },
+        { label: "Sin asignar", n: 3, d: total, sentido: "problema" },
+        { label: "Completadas sin fecha de inicio", n: Math.min(4, fin), d: fin, sentido: "problema" }
+      ].map(x => {
+        const n = Math.min(x.n, x.d);
+        const pct = x.d ? Math.round((n / x.d) * 100) : 0;
+        const bueno = x.sentido === "cobertura" ? pct : 100 - pct;
+        const color = bueno >= 70 ? "#4c8a2a" : bueno >= 40 ? "#c9820f" : "#cf3b3b";
+        return { label: x.label, pct: pct + "%", w: pct + "%", detalle: "(" + n + "/" + x.d + ")", color };
+      }),
+      proyectos: lista.map(([nombre, cantidad]) => ({
+        nombre,
+        cantidad,
+        w: Math.round((cantidad / max) * 100) + "%"
+      }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>

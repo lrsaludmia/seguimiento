@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desempeño Ciclo #24 · SALUDMIA</title>
+<style>
+:root {
+  --plane:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e;
+  --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s-comp:#2a78d6; --s-start:#eb6834; --s-todo:#c3c2b7;
+  --s-otro:#898781; --good:#0ca30c; --warn:#eda100; --bad:#d03b3b;
+  --ideal:#b7d3f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7;
+    --muted:#898781; --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --s1:#3987e5; --s-comp:#3987e5; --s-start:#d95926; --s-todo:#52514e;
+    --s-otro:#898781; --good:#0ca30c; --warn:#c98500; --bad:#e34948;
+    --ideal:#184f95;
+  }
+}
+:root[data-theme="dark"] {
+  --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --s1:#3987e5; --s-comp:#3987e5; --s-start:#d95926; --s-todo:#52514e; --ideal:#184f95;
+}
+:root[data-theme="light"] {
+  --plane:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s-comp:#2a78d6; --s-start:#eb6834; --s-todo:#c3c2b7; --ideal:#b7d3f6;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--plane); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.45; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header h1 { font-size:1.5rem; margin:0 0 2px; letter-spacing:-.02em; }
+header .sub { color:var(--ink2); font-size:.95rem; }
+.badge { display:inline-block; background:var(--s1); color:#fff; font-size:.72rem;
+  font-weight:600; padding:2px 9px; border-radius:99px; vertical-align:middle;
+  margin-left:8px; }
+section { background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:20px 22px; margin-top:18px; }
+section h2 { font-size:.82rem; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--muted); margin:0 0 14px; font-weight:600; }
+.kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:12px;
+  margin-top:18px; }
+.kpi { background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; }
+.kpi-lbl { font-size:.72rem; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.04em; }
+.kpi-val { font-size:1.9rem; font-weight:650; line-height:1.1; margin:2px 0;
+  letter-spacing:-.02em; }
+.kpi-sub { font-size:.76rem; color:var(--ink2); }
+.chart { width:100%; height:auto; }
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.8rem;
+  color:var(--ink2); margin-top:10px; }
+.legend i { display:inline-block; width:11px; height:11px; border-radius:3px;
+  margin-right:5px; vertical-align:-1px; }
+.grid { stroke:var(--grid); stroke-width:1; }
+.tick, .ylbl, .cnt, .lbl-comp { fill:var(--ink2);
+  font-family:system-ui,sans-serif; }
+.tick { font-size:10px; fill:var(--muted); }
+.ylbl { font-size:12px; } .ylbl .off { fill:var(--muted); font-size:10px; }
+.cnt { font-size:12px; font-weight:600; fill:var(--ink); }
+.lbl-comp { font-size:11px; font-weight:600; fill:var(--s-comp); }
+.line-scope { fill:none; stroke:var(--axis); stroke-width:2;
+  stroke-dasharray:2 3; }
+.line-ideal { fill:none; stroke:var(--ideal); stroke-width:2; }
+.line-comp { fill:none; stroke:var(--s-comp); stroke-width:2.5;
+  stroke-linejoin:round; stroke-linecap:round; }
+.dot-c { fill:var(--s-comp); stroke:var(--surface); stroke-width:2; }
+.seg-completed { fill:var(--s-comp); } .seg-started { fill:var(--s-start); }
+.seg-unstarted { fill:var(--s-todo); } .seg-otro { fill:var(--s-otro); }
+.split { display:grid; grid-template-columns:1.35fr 1fr; gap:18px; }
+.tp-bar { display:flex; height:30px; border-radius:8px; overflow:hidden;
+  border:1px solid var(--border); }
+.tp-real { background:var(--s-comp); } .tp-carry { background:var(--s-otro); }
+.tp-bar div { display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:.8rem; font-weight:600; }
+.tp-note { font-size:.82rem; color:var(--ink2); margin-top:12px; }
+.tp-note code { font-size:.78rem; }
+.metric-row { display:flex; gap:22px; margin-top:6px; flex-wrap:wrap; }
+.metric-row .m b { font-size:1.3rem; }
+.metric-row .m span { font-size:.76rem; color:var(--ink2); display:block; }
+.meter { margin-bottom:13px; }
+.meter-top { display:flex; justify-content:space-between; font-size:.85rem;
+  margin-bottom:4px; }
+.meter-top .frac { color:var(--muted); font-weight:400; font-size:.78rem; }
+.track { height:8px; background:var(--grid); border-radius:99px; overflow:hidden; }
+.fill { height:100%; border-radius:99px; }
+.fill.good { background:var(--good); } .fill.warn { background:var(--warn); }
+.fill.bad { background:var(--bad); }
+.aging { list-style:none; padding:0; margin:10px 0 0; font-size:.85rem; }
+.aging li { padding:4px 0; border-top:1px solid var(--border); }
+.aging b { color:var(--bad); }
+table.risk { width:100%; border-collapse:collapse; font-size:.83rem; }
+table.risk th { text-align:left; color:var(--muted); font-weight:600;
+  font-size:.72rem; text-transform:uppercase; letter-spacing:.04em;
+  padding:6px 8px; border-bottom:1px solid var(--border); }
+table.risk td { padding:7px 8px; border-bottom:1px solid var(--border);
+  vertical-align:top; }
+.mono { font-family:ui-monospace,"Cascadia Code",monospace; font-size:.8rem;
+  color:var(--ink2); white-space:nowrap; }
+.chip { display:inline-block; background:var(--grid); color:var(--ink2);
+  border-radius:6px; padding:1px 7px; font-size:.72rem; margin:1px 2px 1px 0;
+  white-space:nowrap; }
+.empty { color:var(--good); font-weight:500; }
+.table-scroll { overflow-x:auto; }
+footer { margin-top:26px; color:var(--muted); font-size:.78rem;
+  text-align:center; }
+.note { font-size:.82rem; color:var(--ink2); background:var(--plane);
+  border-left:3px solid var(--warn); padding:10px 14px; border-radius:0 8px 8px 0;
+  margin-top:12px; }
+@media (max-width:720px) {
+  .kpis { grid-template-columns:repeat(2,1fr); }
+  .split { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Desempeño del equipo · Ciclo #24
+    <span class="badge">SALUDMIA</span></h1>
+  <div class="sub">21 sep – 5 oct de
+    2026 · 14 días · corte al 2026-09-22 14:14 UTC</div>
+</header>
+
+<div class="kpis"><div class="kpi"><span class="kpi-lbl">Alcance</span><span class="kpi-val">22</span><span class="kpi-sub">issues en el ciclo</span></div><div class="kpi"><span class="kpi-lbl">Avance</span><span class="kpi-val">32%</span><span class="kpi-sub">7 de 22 hechas</span></div><div class="kpi"><span class="kpi-lbl">Throughput real</span><span class="kpi-val">0</span><span class="kpi-sub">completadas dentro del ciclo</span></div><div class="kpi"><span class="kpi-lbl">En curso</span><span class="kpi-val">9</span><span class="kpi-sub">7 estancadas</span></div><div class="kpi"><span class="kpi-lbl">Días restantes</span><span class="kpi-val">13</span><span class="kpi-sub">día 1 de 14</span></div></div>
+
+<section>
+  <h2>1 · Avance del ciclo (burnup)</h2>
+  <svg viewBox="0 0 680 260" role="img" class="chart"
+  aria-label="Burnup del ciclo: completadas frente al alcance total">
+  <line x1="34" y1="234.0" x2="666" y2="234.0" class="grid"/><text x="28" y="237.0" text-anchor="end" class="tick">0</text><line x1="34" y1="179.0" x2="666" y2="179.0" class="grid"/><text x="28" y="182.0" text-anchor="end" class="tick">6</text><line x1="34" y1="124.0" x2="666" y2="124.0" class="grid"/><text x="28" y="127.0" text-anchor="end" class="tick">11</text><line x1="34" y1="69.0" x2="666" y2="69.0" class="grid"/><text x="28" y="72.0" text-anchor="end" class="tick">16</text><line x1="34" y1="14.0" x2="666" y2="14.0" class="grid"/><text x="28" y="17.0" text-anchor="end" class="tick">22</text>
+  <polyline points="34.0,14.0" class="line-scope"/>
+  <path d="M34.0,234.0 L666.0,14.0" class="line-ideal"/>
+  <path d="M34.0,164.0" class="line-comp"/>
+  <circle cx="34.0" cy="164.0" r="4" class="dot-c"/>
+  <text x="34.0" y="155.0" text-anchor="end"
+    class="lbl-comp">7 hechas</text>
+</svg>
+  <div class="legend">
+    <span><i style="background:var(--s-comp)"></i>Completadas (acumulado)</span>
+    <span><i style="background:var(--ideal)"></i>Ritmo ideal</span>
+    <span><i style="background:var(--axis)"></i>Alcance total</span>
+  </div>
+</section>
+
+<section>
+  <h2>2 · Throughput real vs. carryover</h2>
+  <div class="tp-bar">
+    <div class="tp-real" style="width:0%">0 reales</div>
+    <div class="tp-carry" style="width:100%">7 carryover</div>
+  </div>
+  <div class="metric-row">
+    <div class="m"><b>0</b><span>completadas dentro del ciclo</span></div>
+    <div class="m"><b>7</b><span>cierres de backlog (día 1)</span></div>
+    <div class="m"><b>n/d</b><span>cycle time · sin datos de inicio suficientes</span></div>
+  </div>
+  <p class="tp-note">Throughput real: <code>—</code>. El
+    <b>carryover</b> son issues antiguos marcados «Hecho» el primer día del ciclo
+    (limpieza de backlog); no reflejan trabajo producido en estos 14
+    días.</p>
+  <div class='note'><b>WIP estancado:</b> hay trabajos en curso iniciados antes del ciclo — conviene cerrarlos o repartirlos:</div><ul class="aging"><li><span class="mono">SAL-142</span> Revisar y validar sobre la solicitud de parametrizar los códigos cup <b>105 d</b></li><li><span class="mono">SAL-189</span> Automatización suficiencia V1 <b>34 d</b></li><li><span class="mono">SAL-192</span> Etapa 3 <b>34 d</b></li><li><span class="mono">SAL-210</span> Documentar reglas por tipo de archivo <b>28 d</b></li><li><span class="mono">SAL-193</span> Etapa 4 <b>28 d</b></li><li><span class="mono">SAL-251</span> Etapa 5 <b>15 d</b></li></ul>
+</section>
+
+<section>
+  <h2>3 · Carga por persona</h2>
+  <svg viewBox="0 0 680 110" role="img" class="chart"
+  aria-label="Carga por persona"><text x="120" y="19" text-anchor="end" class="ylbl">Luis Carlos Ruiz</text><rect x="128.0" y="6" width="157.4" height="18" rx="3" class="seg-completed"/><rect x="287.4" y="6" width="157.4" height="18" rx="3" class="seg-started"/><rect x="446.8" y="6" width="189.2" height="18" rx="3" class="seg-unstarted"/><text x="644.0" y="19" class="cnt">16</text><text x="120" y="53" text-anchor="end" class="ylbl">didierpete@saludmia.org</text><rect x="128.0" y="40" width="29.9" height="18" rx="3" class="seg-completed"/><rect x="159.9" y="40" width="125.5" height="18" rx="3" class="seg-started"/><text x="293.4" y="53" class="cnt">5</text><text x="120" y="87" text-anchor="end" class="ylbl">Andrés Mora <tspan class="off">· inactivo</tspan></text><rect x="128.0" y="74" width="29.9" height="18" rx="3" class="seg-completed"/><text x="165.9" y="87" class="cnt">1</text></svg>
+  <div class="legend">
+    <span><i style="background:var(--s-comp)"></i>Hecho</span>
+    <span><i style="background:var(--s-start)"></i>En curso</span>
+    <span><i style="background:var(--s-todo)"></i>Por hacer</span>
+    <span>Sin asignar: <b>0</b></span>
+  </div>
+</section>
+
+<section>
+  <h2>4 · Salud de datos y proceso</h2>
+  <div class="meter">
+  <div class="meter-top"><span>Con estimación</span>
+    <b>5% <span class="frac">(1/22)</span></b></div>
+  <div class="track"><div class="fill bad" style="width:5%"></div></div>
+</div><div class="meter">
+  <div class="meter-top"><span>Con etiqueta de tipo (Doble Carril)</span>
+    <b>18% <span class="frac">(4/22)</span></b></div>
+  <div class="track"><div class="fill bad" style="width:18%"></div></div>
+</div><div class="meter">
+  <div class="meter-top"><span>Sin asignar</span>
+    <b>0% <span class="frac">(0/22)</span></b></div>
+  <div class="track"><div class="fill good" style="width:0%"></div></div>
+</div><div class="meter">
+  <div class="meter-top"><span>Completadas sin fecha de inicio</span>
+    <b>100% <span class="frac">(7/7)</span></b></div>
+  <div class="track"><div class="fill bad" style="width:100%"></div></div>
+</div>
+  <p class="tp-note">Baja cobertura de estimación y de etiquetas de tipo significa
+    que las métricas de velocidad y la segmentación por carril aún no son
+    confiables. Subir estos porcentajes hace que el propio tablero valga más.</p>
+</section>
+
+<section>
+  <h2>Issues en riesgo</h2>
+  <div class="table-scroll"><table class="risk"><thead><tr>
+    <th>ID</th><th>Título</th><th>Responsable</th><th>Estado</th><th>Señal</th>
+    </tr></thead><tbody><tr><td class="mono">SAL-142</td><td>Revisar y validar sobre la solicitud de parametrizar los códigos cup</td><td>didierpete@saludmia.org</td><td>Esperando respuesta</td><td><span class="chip">En curso 105 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-189</td><td>Automatización suficiencia V1</td><td>Luis Carlos Ruiz</td><td>En curso</td><td><span class="chip">En curso 34 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-192</td><td>Etapa 3</td><td>Luis Carlos Ruiz</td><td>En curso</td><td><span class="chip">En curso 34 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-210</td><td>Documentar reglas por tipo de archivo</td><td>didierpete@saludmia.org</td><td>En curso</td><td><span class="chip">En curso 28 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-193</td><td>Etapa 4</td><td>Luis Carlos Ruiz</td><td>En curso</td><td><span class="chip">En curso 28 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-251</td><td>Etapa 5</td><td>Luis Carlos Ruiz</td><td>En curso</td><td><span class="chip">En curso 15 d</span> <span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-228</td><td>Automatización de suficiencia — Etapa 2, simulacro Q3 2026</td><td>Luis Carlos Ruiz</td><td>En curso</td><td><span class="chip">En curso 15 d</span></td></tr><tr><td class="mono">SAL-258</td><td>Documentación suficiencia</td><td>didierpete@saludmia.org</td><td>En curso</td><td><span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-269</td><td>Informe</td><td>didierpete@saludmia.org</td><td>En curso</td><td><span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-271</td><td>Revisión de producto para mostrar indicadores</td><td>Luis Carlos Ruiz</td><td>Por Hacer</td><td><span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-265</td><td>Definición de producto de datos para incapacidades</td><td>Luis Carlos Ruiz</td><td>Por Hacer</td><td><span class="chip">Sin estimar/caja</span></td></tr><tr><td class="mono">SAL-252</td><td>Documentación</td><td>Luis Carlos Ruiz</td><td>Por Hacer</td><td><span class="chip">Sin estimar/caja</span></td></tr></tbody></table></div>
+</section>
+
+<footer>Generado automáticamente desde Linear · SaludMía · 2026-09-22 14:14 UTC</footer>
+</div>
+</body>
+</html>

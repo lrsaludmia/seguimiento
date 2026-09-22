@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de seguimiento semanal — SaludMía EPS</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  /* ── Tokens SaludMía (subconjunto usado) ───────────────────────────── */
+  :root{
+    --sm-color-primary-50:#f2f7ea; --sm-color-primary-100:#e3efd2; --sm-color-primary-400:#90bf57;
+    --sm-color-primary-500:#79a834; --sm-color-primary-600:#628a2a; --sm-color-primary-700:#4c6b21;
+    --sm-neutral-50:#f7f7f6; --sm-neutral-100:#f0efed; --sm-neutral-200:#dad6d3; --sm-neutral-500:#888b8e;
+    --sm-neutral-600:#6d6f72; --sm-neutral-700:#54565a; --sm-neutral-900:#232527;
+    --sm-success:#4c8a2a; --sm-success-bg:#eaf4e0; --sm-danger:#cf3b3b; --sm-danger-bg:#fbeaea;
+    --sm-warning:#c9820f; --sm-warning-bg:#fcf3e3; --sm-info:#2f6fb0; --sm-info-bg:#e8f0f9;
+    --sm-radius-lg:12px; --sm-radius-full:9999px;
+    --sm-shadow-sm:0 1px 2px rgba(35,37,39,.08);
+    --sm-font-sans:"Ubuntu","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#f7f7f6;font-family:var(--sm-font-sans);color:#232527}
+  a{color:#628a2a;text-decoration:none}
+  a:hover{color:#4c6b21;text-decoration:underline}
+  h1,h2,p{margin:0}
+  .sm-card{background:#fff;border:1px solid var(--sm-neutral-200);border-radius:var(--sm-radius-lg);
+    box-shadow:var(--sm-shadow-sm)}
+  .sm-badge{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--sm-font-sans);
+    font-size:.75rem;font-weight:700;line-height:1;padding:4px .5rem;border-radius:var(--sm-radius-full);
+    white-space:nowrap}
+  .sm-badge--soft.sm-badge--success{background:var(--sm-success-bg);color:var(--sm-success)}
+  .sm-badge--soft.sm-badge--warning{background:var(--sm-warning-bg);color:var(--sm-warning)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════
+   Datos reales — Linear, equipo SALUDMIA, ciclo 24 (21 sep – 5 oct 2026),
+   extraídos el 22 sep 2026. Lógica portada 1:1 desde el componente de
+   diseño "Tablero Semanal Linear.dc.html" (renderVals).
+   ══════════════════════════════════════════════════════════════════════ */
+// Datos inyectados por generar_reporte_ciclo.py (build_tablero_data). En Python
+// se reemplaza el marcador /*__DATA__*/ por el JSON del ciclo activo de Linear.
+const DATA = {"cycle": {"cicloInicio": 1789948800000, "hoy": 1790035200000, "diasHabiles": [1789948800000, 1790035200000, 1790121600000, 1790208000000, 1790294400000, 1790553600000, 1790640000000, 1790726400000, 1790812800000, 1790899200000, 1791158400000], "rangoFechas": "lun 21 sep – lun 5 oct 2026", "fechaInicio": "lun 21 sep", "fechaFin": "lun 5 oct", "actualizado": "22 sep 2026"}, "issues": [{"id": "SAL-271", "t": "Revisión de producto para mostrar indicadores", "a": "Luis Carlos Ruiz", "p": "Indicadores UAD", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 0, "due": "2026-09-29"}, {"id": "SAL-269", "t": "Informe", "a": "didierpete@saludmia.org", "p": "Informe Dispositivos Médicos", "s": "started", "ini": "2026-09-21", "fin": null, "est": null, "lab": 0, "due": null}, {"id": "SAL-265", "t": "Definición de producto de datos para incapacidades", "a": "Luis Carlos Ruiz", "p": "Incapacidades", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 0, "due": "2026-09-29"}, {"id": "SAL-260", "t": "Construcción de consulta SQL", "a": "Luis Carlos Ruiz", "p": "Seguimiento Calidad de Dato RIPS", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 1, "due": "2026-09-25"}, {"id": "SAL-259", "t": "Documentación ASIS", "a": "didierpete@saludmia.org", "p": "Automatización proceso suficiencia", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 0, "due": null}, {"id": "SAL-258", "t": "Documentación suficiencia", "a": "didierpete@saludmia.org", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-09-21", "fin": null, "est": null, "lab": 0, "due": null}, {"id": "SAL-256", "t": "¿Existe ya un esquema/warehouse donde Analítica de Datos pueda escribir tablas propias sin depender de una solicitud a TIC por cada cambio?", "a": "Luis Carlos Ruiz", "p": "Seguimiento Calidad de Dato RIPS", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 1, "due": null}, {"id": "SAL-255", "t": "¿El resultado de las mallas de validación de \"Revisión mensual de RIPS\" incluye el detalle de qué campo específico falló por registro (no solo pasa/no pasa)?", "a": "Luis Carlos Ruiz", "p": "Seguimiento Calidad de Dato RIPS", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 1, "due": null}, {"id": "SAL-252", "t": "Documentación", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 0, "due": "2026-10-05"}, {"id": "SAL-251", "t": "Etapa 5", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-09-07", "fin": null, "est": null, "lab": 0, "due": "2026-10-05"}, {"id": "SAL-238", "t": "Reconciliar resultados automatizado vs. manual de la etapa 2", "a": "Luis Carlos Ruiz", "p": "Sin proyecto", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 0, "due": "2026-09-22"}, {"id": "SAL-237", "t": "Ejecutar corrida manual de control de la etapa 2", "a": "Luis Carlos Ruiz", "p": "Sin proyecto", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 0, "due": "2026-09-22"}, {"id": "SAL-236", "t": "Ejecutar corrida automatizada de la etapa 2", "a": "Luis Carlos Ruiz", "p": "Sin proyecto", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 0, "due": "2026-09-22"}, {"id": "SAL-228", "t": "Automatización de suficiencia — Etapa 2, simulacro Q3 2026", "a": "Luis Carlos Ruiz", "p": "Corrida simulacro de suficiencia", "s": "started", "ini": "2026-09-07", "fin": null, "est": 2, "lab": 1, "due": "2026-09-22"}, {"id": "SAL-211", "t": "Documentación", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 0, "due": "2026-09-30"}, {"id": "SAL-210", "t": "Documentar reglas por tipo de archivo", "a": "didierpete@saludmia.org", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-08-24", "fin": null, "est": null, "lab": 0, "due": null}, {"id": "SAL-203", "t": "Documentación", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "unstarted", "ini": null, "fin": null, "est": null, "lab": 0, "due": "2026-09-25"}, {"id": "SAL-189", "t": "Automatización suficiencia V1", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-08-18", "fin": null, "est": null, "lab": 0, "due": null}, {"id": "SAL-192", "t": "Etapa 3", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-08-18", "fin": null, "est": null, "lab": 0, "due": "2026-09-25"}, {"id": "SAL-193", "t": "Etapa 4", "a": "Luis Carlos Ruiz", "p": "Automatización proceso suficiencia", "s": "started", "ini": "2026-08-25", "fin": null, "est": null, "lab": 0, "due": "2026-09-30"}, {"id": "SAL-142", "t": "Revisar y validar sobre la solicitud de parametrizar los códigos cup", "a": "didierpete@saludmia.org", "p": "Parametrización códigos Normatividad MinSalud", "s": "blocked", "ini": "2026-06-09", "fin": null, "est": null, "lab": 0, "due": null}, {"id": "SAL-129", "t": "Última versión", "a": "Andrés Mora", "p": "Incapacidades", "s": "completed", "ini": null, "fin": "2026-09-21", "est": null, "lab": 0, "due": null}], "updates": [{"p": "Seguimiento perfilamiento individual", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se acuerda fecha para hacer revisión del producto de datos para hacer seguimiento al diligenciamiento del perfilamiento. Fecha:29/09/2026 @leonardo_silva37 @didierpete"}, {"p": "Seguimiento Calidad de Dato RIPS", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se sostiene reunión con TIC donde se indica y evidencia que la fuente debe partir de una consulta de SQL que alimente el tablero. Posteriormente debe revisarse la inclusión de esta consulta como tabla/vista. Fecha estimada de inicio para construcción de consulta 23/09/2026"}, {"p": "Informe Dispositivos Médicos", "f": "17 sep", "orden": "2026-09-17", "salud": "onTrack", "autor": "didierpete@saludmia.org", "txt": "17092026\n\nSe revisa el insumo compartido por Ing. Camila y se realizan las siguientes actividades:\n\n\\-Revisar en la base de datos sagis los dispositivos médicos faltantes por código y descripción.\n\n\\-Colocar el código de dispositivos médicos de acuerdo a la marca y referencia de la tabla de referencia\n\n\\-Se socializa con Dr. Maribel el ejercicio que se realizo de la búsqueda de los códigos de dispositivos medicos.\n\n\\-Esta pendiente revisar el ejercicio de homologación realizado por ing. Camila, enviar correo con el informe y socializar."}, {"p": "Documentar proceso retroalimentación Suficiencia UPC", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "didierpete@saludmia.org", "txt": "21092026\n\nDe acuerdo a las reuniones virtuales con Catalina se documento las calidades de retroalimentación con el área y persona responsable, tiene un avance del 60%."}, {"p": "Metodología Investigación FCV", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "Leoanardo Silva", "txt": "El dia 18 de sept se realiza reunion con el Dr. Anderson en donde se establecen nuevos grupos de patologias como CAC, enfermedad laboral, asi mismo como un nuevo modelo de diagrama para evaluar costo en tiempo."}, {"p": "Corrida simulacro de suficiencia", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se recibe respuesta por parte de aseguramiento con las variables de BDUA. Se inicia corrida de etapa 2 con estimado de finalización 24/09/26"}, {"p": "Piloto Cuenta Alto Costo", "f": "18 jun", "orden": "2026-06-18", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Revisión con Luis Calderón para entendimiento de corrida de scripts y llenado de tablas"}, {"p": "Capacidad instalada IMAP", "f": "9 jun", "orden": "2026-06-09", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "A la espera de CUPS para extracción de información"}, {"p": "Parametrización códigos Normatividad MinSalud", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "didierpete@saludmia.org", "txt": "210926\n\nPara la parametrización de la CUPS se informa que esta pendiente de un tercero para proceder con el ajuste en producción de los 9.887 CUPS correspondientes a los campos POS, ámbito, sexo, máximo veces vida, quirúrgico y tipo de atención, así como la creación de los 190 CUPS relacionados con la Resolución 2706 y vigencias anteriores, adicional a la creación de los 9 grupos y subgrupos de servicios de salud y los 44 servicios de salud solicitados por el área. La solicitud y autorización por parte de Dra. Alejandra está desde el 12 de mayo de 2026, se consulta en el mes de agosto e indica TIC que se demora un mes aproximadamente. A la fecha del 21092026 aun no se ve reflejado la solicitud en la base de datos SAGIS."}, {"p": "Obesidad - IMAP", "f": "1 jun", "orden": "2026-06-01", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Definir propuesta de programa desde EPS para presentar propuesta a IMAP. Por agendar reunión con IMAP para definir los pasos siguientes o encontrar un prestador que lo ejecute."}, {"p": "Indicadores UAD", "f": "24 abr", "orden": "2026-04-24", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se definen indicadores en el manual de funciones. Se envía a calidad para revisión"}, {"p": "Revisión mensual de RIPS", "f": "9 jun", "orden": "2026-06-09", "salud": "onTrack", "autor": "didierpete@saludmia.org", "txt": "Se avanzo en el tipo 2, esta pendiente la retroalimentación por parte de Catalina, 050626\n\nSe dio inicio con el tipo 3. 050626"}, {"p": "Manual de funciones UAD", "f": "9 jun", "orden": "2026-06-09", "salud": "onTrack", "autor": "didierpete@saludmia.org", "txt": "Buenos días, Dr. Alejandra.\n\nPor medio del presente solicitamos amablemente la revisión y aprobación del manual de funciones de la Unidad de Análisis de Datos.\n\nAgradezco la atención.\n\n090626"}, {"p": "Perfil Epidemiológico FSM EPS", "f": "8 may", "orden": "2026-05-08", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se cierra el proyecto con la entrega del documento y la socialización con las áreas involucradas. El paso siguiente es documentar el proceso para el próximo año."}, {"p": "Lanzamiento de cuestionario de perfilamiento", "f": "1 jun", "orden": "2026-06-01", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se define la fecha de inicio de aplicación para el 9 de junio. 25 preguntas iniciales para cuestionario y 43 adicionales para envío masivo. Se define asistencia a plenaria para inquietudes, envío de preguntas a ing. Jairo. Instructivos sobre definiciones en preguntas."}, {"p": "Automatización proceso suficiencia", "f": "21 sep", "orden": "2026-09-21", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se finaliza etapa 5 de desarrollo. Actualmente se está realizando la documentación de las etapas de acuerdo con la retroalimentación del simulacro del proceso. En el momento se encuentran documentadas las etapas 1 y 2."}, {"p": "Incapacidades", "f": "11 sep", "orden": "2026-09-11", "salud": "onTrack", "autor": "Leoanardo Silva", "txt": "El dia 11/09/2026 se realiza envio de informe de incapacidades enfatizado a IPS san camilo"}, {"p": "Perfil Epidemiológico IMAP", "f": "1 jun", "orden": "2026-06-01", "salud": "onTrack", "autor": "Luis Carlos Ruiz", "txt": "Se entrega perfil al IMAP. A la espera de validación y aprobación de documento."}], "detenidas": [{"id": "SAL-142", "t": "Revisar y validar sobre la solicitud de parametrizar los códigos cup", "resp": "didierpete@saludmia.org", "p": "Parametrización códigos Normatividad MinSalud", "desde": "2026-06-09", "ultima": "21 sep"}], "props": {"cicloLabel": "Ciclo 24", "metaResolucion": 80, "ordenResponsables": "Resolución", "mostrarCronologia": true, "mostrarEsfuerzo": true}};
+
+// Constantes del ciclo (epoch ms). DIAS_HABILES = todos los días hábiles del ciclo.
+const CICLO_INICIO = DATA.cycle.cicloInicio;
+const HOY = DATA.cycle.hoy;
+const DIAS_HABILES = DATA.cycle.diasHabiles;
+const TOTAL_DIAS = DIAS_HABILES.length;
+const DIA_ACTUAL = DIAS_HABILES.filter(t => t <= HOY).length;
+
+const ms = iso => { const [y,m,d] = iso.split("-").map(Number); return Date.UTC(y, m-1, d); };
+
+// Índice hábil dentro del ciclo (1..10); antes del ciclo → 1, después → 10.
+function habil(iso){
+  if(!iso) return null;
+  const t = ms(iso);
+  if(t <= DIAS_HABILES[0]) return 1;
+  if(t >= DIAS_HABILES[TOTAL_DIAS-1]) return TOTAL_DIAS;
+  let i = DIAS_HABILES.findIndex(d => d >= t);
+  return i < 0 ? TOTAL_DIAS : i + 1;
+}
+
+// Días hábiles calendario entre dos fechas (inclusive), sin límite de ciclo.
+function habilesEntre(a, b){
+  let n = 0;
+  for(let t = a; t <= b; t += 86400000){
+    const wd = new Date(t).getUTCDay();
+    if(wd !== 0 && wd !== 6) n++;
+  }
+  return n;
+}
+
+const ISSUES = DATA.issues;
+
+const COLORES = { completed:"#4c8a2a", started:"#2f6fb0", unstarted:"#888b8e", blocked:"#c9820f" };
+
+// Último update por proyecto (Linear · project updates), solo proyectos presentes en el ciclo.
+const UPDATES = DATA.updates;
+
+// Tareas en estado "Esperando respuesta" (Linear, equipo SALUDMIA).
+const DETENIDAS = DATA.detenidas;
+
+const SALUD_UPDATE = {
+  onTrack:{ color:"#4c8a2a", label:"Al día" },
+  atRisk:{ color:"#c9820f", label:"En riesgo" },
+  offTrack:{ color:"#cf3b3b", label:"Atrasado" }
+};
+
+function mezclaMagentaVerde(pct){
+  const t = Math.max(0, Math.min(100, pct)) / 100;
+  const a = [0xa5,0x00,0xb2], b = [0x79,0xa8,0x34];
+  return "rgb(" + a.map((v,i) => Math.round(v + (b[i]-v)*t)).join(", ") + ")";
+}
+
+const dia = habil;
+
+/* ── Props (equivalentes a los controles del componente de diseño) ─────── */
+const PROPS = DATA.props;
+
+function renderVals(props){
+  const meta = Number(props.metaResolucion ?? 80);
+  const orden = props.ordenResponsables ?? "Resolución";
+
+  const total = ISSUES.length;
+  const fin = ISSUES.filter(i => i.s === "completed").length;
+  const cur = ISSUES.filter(i => i.s === "started").length;
+  const pla = ISSUES.filter(i => i.s === "unstarted").length;
+  const bloq = ISSUES.filter(i => i.s === "blocked").length;
+  const avancePct = Math.round((fin/total)*100);
+  const esperadoPct = Math.round((DIA_ACTUAL/TOTAL_DIAS)*100);
+  const delta = avancePct - esperadoPct;
+
+  const nombres = [...new Set(ISSUES.map(i => i.a || "Sin asignar"))];
+  let responsables = nombres.map(n => {
+    const suyas = ISSUES.filter(i => (i.a || "Sin asignar") === n);
+    const f = suyas.filter(i => i.s === "completed").length;
+    const c = suyas.filter(i => i.s === "started").length;
+    // Días-tarea DENTRO del ciclo: solo tareas con inicio real; las iniciadas antes se clampean al día 1.
+    const conIni = suyas.filter(i => i.ini && i.s !== "unstarted");
+    const dias = conIni.reduce((acc, i) => {
+      const a = Math.max(1, Math.min(TOTAL_DIAS, dia(i.ini)));
+      const b = Math.max(a, Math.min(TOTAL_DIAS, dia(i.fin) || DIA_ACTUAL));
+      return acc + (b - a + 1);
+    }, 0);
+    const res = Math.round((f/suyas.length)*100);
+    return {
+      nombre: n,
+      iniciales: n.split(" ").slice(0,2).map(w => w[0]).join(""),
+      planeadas: suyas.length,
+      finalizadas: f,
+      curso: c,
+      resolucion: res,
+      resW: res + "%",
+      resColor: mezclaMagentaVerde(res),
+      resFill: "linear-gradient(90deg, #a500b2 0%, " + mezclaMagentaVerde(res) + " 100%)",
+      diasTotales: dias,
+      conIni: conIni.length,
+      esfuerzo: (dias/DIA_ACTUAL).toFixed(1) + "×"
+    };
+  });
+  if(orden === "Resolución") responsables.sort((a,b) => b.resolucion - a.resolucion);
+  if(orden === "Carga") responsables.sort((a,b) => b.planeadas - a.planeadas);
+  if(orden === "Nombre") responsables.sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+  const conteo = {};
+  ISSUES.forEach(i => { conteo[i.p] = (conteo[i.p] || 0) + 1; });
+  const listaP = Object.entries(conteo).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const max = listaP[0] ? listaP[0][1] : 1;
+
+  const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const corto = iso => { const [y,m,d] = iso.split("-").map(Number); return d + " " + MES[m-1]; };
+
+  // Barras: tareas con inicio real. Hitos: cerradas sin inicio registrado (solo fecha de cierre).
+  const filas = ISSUES
+    .filter(i => i.s !== "unstarted" && (i.ini || i.fin))
+    .map(i => {
+      const hito = !i.ini;
+      const a = hito
+        ? Math.max(1, Math.min(TOTAL_DIAS, dia(i.fin)))
+        : Math.max(1, Math.min(TOTAL_DIAS, dia(i.ini)));
+      const b = hito ? a : Math.max(a, Math.min(TOTAL_DIAS, dia(i.fin) || DIA_ACTUAL));
+      return { i, a, b, hito };
+    })
+    .sort((x,y) => x.hito - y.hito || x.a - y.a || x.b - y.b);
+
+  const timeline = filas.map(({i,a,b,hito}) => {
+    let real = "—", realTitulo = "Sin fecha de inicio registrada", realColor = "#6d6f72", dReal = null;
+    if(i.ini){
+      dReal = habilesEntre(ms(i.ini), i.fin ? ms(i.fin) : HOY);
+      real = dReal + " d" + (i.fin ? "" : "+");
+      realColor = i.fin ? "#232527" : "#2f6fb0";
+      realTitulo = i.fin
+        ? "Cerrada en " + dReal + " días hábiles (" + corto(i.ini) + " → " + corto(i.fin) + ")"
+        : "Abierta hace " + dReal + " días hábiles (desde " + corto(i.ini) + ")";
+    } else if(i.fin){
+      realTitulo = "Cerrada el " + corto(i.fin) + " sin fecha de inicio en Linear";
+    }
+    let teorico = "—", teoTitulo = "Sin estimación ni fecha límite", teoColor = "#6d6f72", dTeo = null;
+    if(i.est != null){
+      dTeo = i.est;
+      teoTitulo = "Estimación en Linear: " + i.est + " puntos";
+    } else if(i.ini && i.due){
+      dTeo = habilesEntre(ms(i.ini), ms(i.due));
+      teoTitulo = "Días hábiles de inicio a fecha límite (" + corto(i.ini) + " → " + corto(i.due) + ")";
+    }
+    if(dTeo != null){
+      teorico = dTeo + " d";
+      if(dReal != null){
+        teoColor = dReal > dTeo ? "#cf3b3b" : "#4c8a2a";
+        teoTitulo += " · real " + dReal + " d (" + (dReal > dTeo ? "+" : "") + (dReal - dTeo) + ")";
+      }
+    }
+    const antes = !hito && ms(i.ini) < DIAS_HABILES[0];
+    const abierta = !hito && (!i.fin || ms(i.fin) > DIAS_HABILES[TOTAL_DIAS-1]);
+    const color = COLORES[i.s];
+    return {
+      titulo: i.id + " · " + i.t,
+      full: i.t + " — " + (i.a || "Sin asignar") + (hito ? " · cierre " + corto(i.fin) : ""),
+      responsable: (i.a || "Sin asignar").split(" ")[0],
+      fondo: hito ? "transparent" : color,
+      borde: hito ? "1.5px dashed " + color : "none",
+      tinta: hito ? color : "#ffffff",
+      etiqueta: hito ? "✓ " + corto(i.fin) : (antes ? "◀ " + corto(i.ini) : corto(i.ini)),
+      radio: (antes ? "0 " : "5px ") + (abierta ? "0 0 " : "5px 5px ") + (antes ? "0" : "5px"),
+      left: ((a-1)/TOTAL_DIAS)*100 + "%",
+      width: (hito ? 1.6/TOTAL_DIAS : (b-a+1)/TOTAL_DIAS)*100 + "%",
+      real, realTitulo, realColor, teorico, teoTitulo, teoColor
+    };
+  });
+
+  const estadosDibujados = [...new Set(filas.map(f => f.i.s))];
+  const ETIQ = { completed:"Finalizada", started:"En curso", blocked:"Detenida", unstarted:"Planeada" };
+
+  const proyectosCiclo = [...new Set(ISSUES.map(i => i.p))].filter(p => p !== "Sin proyecto");
+  const conUpdate = proyectosCiclo.filter(p => UPDATES.some(u => u.p === p));
+  const sinUpdate = proyectosCiclo.filter(p => !UPDATES.some(u => u.p === p));
+
+  const conEst = ISSUES.filter(i => i.est != null).length;
+  const conLab = ISSUES.filter(i => i.lab > 0).length;
+  const sinAsig = ISSUES.filter(i => !i.a).length;
+  const finSinIni = ISSUES.filter(i => i.s === "completed" && !i.ini).length;
+
+  const salud = [
+    { label:"Con estimación", n:conEst, d:total, sentido:"cobertura" },
+    { label:"Con etiqueta de tipo", n:conLab, d:total, sentido:"cobertura" },
+    { label:"Sin asignar", n:sinAsig, d:total, sentido:"problema" },
+    { label:"Completadas sin fecha de inicio", n:finSinIni, d:fin, sentido:"problema" },
+    { label:"Con proyecto asignado", n:ISSUES.filter(i => i.p !== "Sin proyecto").length, d:total, sentido:"cobertura" }
+  ].map(x => {
+    const pct = x.d ? Math.round((x.n/x.d)*100) : 0;
+    const bueno = x.sentido === "cobertura" ? pct : 100 - pct;
+    const color = bueno >= 70 ? "#4c8a2a" : bueno >= 40 ? "#c9820f" : "#cf3b3b";
+    return { label:x.label, pct:pct + "%", w:pct + "%", detalle:"(" + x.n + "/" + x.d + ")", color };
+  });
+
+  return {
+    cicloLabel: props.cicloLabel ?? "Ciclo 24",
+    rangoFechas: DATA.cycle.rangoFechas,
+    fechaInicio: DATA.cycle.fechaInicio,
+    fechaFin: DATA.cycle.fechaFin,
+    totalDias: TOTAL_DIAS,
+    actualizado: DATA.cycle.actualizado,
+    diaActual: DIA_ACTUAL,
+    totalIssues: total,
+    mostrarCronologia: props.mostrarCronologia ?? true,
+    mostrarEsfuerzo: props.mostrarEsfuerzo ?? true,
+    metaTexto: meta + "%",
+    ordenTexto: orden,
+    kpis: [
+      { label:"Finalizadas", value:fin, color:COLORES.completed, hint:"Cerradas en el ciclo" },
+      { label:"En curso", value:cur, color:COLORES.started, hint:"Con avance en el ciclo" },
+      { label:"Detenidas", value:bloq, color:COLORES.blocked, hint:"Esperando respuesta" },
+      { label:"Planeadas", value:pla, color:COLORES.unstarted, hint:"Aún sin iniciar" },
+      { label:"Totales", value:total, color:"#232527", hint:"Tareas del ciclo" }
+    ],
+    avancePct,
+    avanceW: avancePct + "%",
+    esperadoPct,
+    desviacionTexto: delta >= 0 ? "+" + delta + " pts sobre lo esperado" : delta + " pts bajo lo esperado",
+    desviacionClase: "sm-badge sm-badge--soft " + (delta >= 0 ? "sm-badge--success" : "sm-badge--warning"),
+    leyenda: estadosDibujados.map(s => ({ label:ETIQ[s], color:COLORES[s] })),
+    hoyLeft: ((DIA_ACTUAL-0.5)/TOTAL_DIAS)*100 + "%",
+    ticks: [1,3,5,8,10].map(d => ({ label:String(d), left:((d-0.5)/TOTAL_DIAS)*100 + "%" })),
+    timeline,
+    sinInicioNota: filas.some(f => f.hito)
+      ? "Marca punteada (✓) = tarea cerrada sin fecha de inicio en Linear: se ubica en su día de cierre y no tiene duración medible."
+      : "",
+    leyendaRecorte: "◀ y extremo recto = la tarea empezó antes del ciclo o sigue abierta; la etiqueta es su fecha de inicio real.",
+    responsables,
+    proyectos: listaP.map(([nombre, cantidad]) => ({
+      nombre, cantidad, w: Math.round((cantidad/max)*100) + "%"
+    })),
+    salud,
+    updates: proyectosCiclo
+      .map(p => UPDATES.find(u => u.p === p))
+      .filter(Boolean)
+      .sort((a,b) => (a.orden < b.orden ? 1 : -1))
+      .map(u => ({
+        proyecto:u.p, fecha:u.f, autor:u.autor, texto:u.txt,
+        color:SALUD_UPDATE[u.salud].color, estado:SALUD_UPDATE[u.salud].label
+      })),
+    detenidas: DETENIDAS.map(d => ({
+      id:d.id, titulo:d.t, responsable:d.resp, proyecto:d.p,
+      dias: habilesEntre(ms(d.desde), HOY) + " días hábiles detenida",
+      ultima: "Última actividad " + d.ultima
+    })),
+    detenidasN: DETENIDAS.length + (DETENIDAS.length === 1 ? " tarea" : " tareas"),
+    leyendaSalud: ["onTrack","atRisk","offTrack"].map(k => ({
+      label:SALUD_UPDATE[k].label, color:SALUD_UPDATE[k].color,
+      n: proyectosCiclo.filter(p => { const u = UPDATES.find(x => x.p === p); return u && u.salud === k; }).length
+    })),
+    sinUpdateN: conUpdate.length + " de " + proyectosCiclo.length + " proyectos del ciclo con update",
+    sinUpdate: sinUpdate.length
+      ? "Sin update registrado en Linear: " + sinUpdate.join(", ") + "."
+      : "Todos los proyectos del ciclo tienen update registrado."
+  };
+}
+
+/* ── Render (vanilla, reemplaza el motor de plantillas del componente) ─── */
+const LOGO_BLANCO = "data:image/png;base64,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";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+function view(v){
+  return `
+  <div style="min-height:100vh;background:#f7f7f6;color:#232527;padding-bottom:3rem">
+
+    <header style="background:#79a834;color:#fff;padding:1rem clamp(1rem,4vw,2rem) 1.25rem">
+      <div style="max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem 1rem">
+        <img src="${LOGO_BLANCO}" alt="SaludMía" style="height:36px;width:auto;flex:0 0 auto">
+        <div style="display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0">
+          <span style="font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">Fundación SaludMía EPS · Equipo SALUDMIA</span>
+          <h1 style="font-size:clamp(1.125rem,4.5vw,1.5rem);line-height:1.2;font-weight:700">Tablero de seguimiento semanal</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.35);border-radius:9999px;padding:0.375rem 0.875rem;font-size:0.875rem;font-weight:700;white-space:nowrap;flex:0 0 auto">
+          <span style="width:8px;height:8px;border-radius:9999px;background:#fff;display:inline-block"></span>
+          <span>${esc(v.cicloLabel)}</span>
+        </div>
+      </div>
+      <div style="max-width:1120px;margin:0.75rem auto 0;display:flex;flex-wrap:wrap;gap:0.375rem 1.25rem;font-size:0.8125rem;opacity:0.92">
+        <span>Fuente: Linear</span>
+        <span>${esc(v.rangoFechas)}</span>
+        <span>Día hábil ${v.diaActual} de ${v.totalDias}</span>
+        <span>Corte ${esc(v.actualizado)}</span>
+      </div>
+    </header>
+
+    <main style="max-width:1120px;margin:0 auto;padding:clamp(1rem,4vw,1.75rem) clamp(1rem,4vw,2rem);display:flex;flex-direction:column;gap:clamp(1.25rem,4vw,2rem)">
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Estado de avance vs. planeación</h2>
+          <p style="font-size:0.875rem;color:#6d6f72">Cuántas tareas hay planeadas, en curso, detenidas y finalizadas en el ciclo.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem">
+          ${v.kpis.map(k => `
+            <div class="sm-card" style="padding:0.875rem 1rem;display:flex;flex-direction:column;gap:0.375rem;border-left:4px solid ${k.color}">
+              <span style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#6d6f72">${esc(k.label)}</span>
+              <span style="font-size:clamp(1.75rem,7vw,2.25rem);font-weight:700;line-height:1;color:${k.color}">${k.value}</span>
+              <span style="font-size:0.8125rem;color:#6d6f72;line-height:1.4">${esc(k.hint)}</span>
+            </div>`).join("")}
+        </div>
+        <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.75rem">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+            <span style="font-size:0.875rem;font-weight:700">Avance real</span>
+            <span style="font-size:0.8125rem;color:#6d6f72">Esperado a hoy: ${v.esperadoPct}%</span>
+          </div>
+          <div style="position:relative;height:14px;border-radius:9999px;background:#f0efed;overflow:hidden">
+            <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:#79a834;width:${v.avanceW}"></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 0.75rem">
+            <span style="font-size:1.25rem;font-weight:700;line-height:1">${v.avancePct}%</span>
+            <span class="${v.desviacionClase}" style="font-size:0.75rem">${esc(v.desviacionTexto)}</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Último update por proyecto</h2>
+          <p style="font-size:0.875rem;color:#6d6f72">${esc(v.sinUpdateN)}.</p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem">
+          ${v.leyendaSalud.map(s => `
+            <span style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:#54565a">
+              <span style="width:10px;height:10px;border-radius:9999px;display:inline-block;background:${s.color}"></span>${esc(s.label)} <span style="color:#6d6f72">(${s.n})</span>
+            </span>`).join("")}
+        </div>
+        <div class="sm-card" style="padding:0.25rem 1rem">
+          ${v.updates.map(u => `
+            <div style="display:flex;gap:0.75rem;padding:0.875rem 0;border-bottom:1px solid #f0efed">
+              <span style="width:8px;height:8px;flex:0 0 8px;margin-top:0.4rem;border-radius:9999px;background:${u.color}" title="${esc(u.estado)}"></span>
+              <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.25rem 0.625rem">
+                  <span style="font-size:0.875rem;font-weight:700;line-height:1.3">${esc(u.proyecto)}</span>
+                  <span style="font-size:0.6875rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${u.color};border:1px solid ${u.color};border-radius:9999px;padding:0.0625rem 0.5rem;white-space:nowrap;flex:0 0 auto">${esc(u.estado)}</span>
+                  <span style="font-size:0.75rem;color:#6d6f72">${esc(u.fecha)} · ${esc(u.autor)}</span>
+                </div>
+                <p style="font-size:0.875rem;line-height:1.45;color:#54565a;text-wrap:pretty">${esc(u.texto)}</p>
+              </div>
+            </div>`).join("")}
+          <p style="padding:0.75rem 0;font-size:0.75rem;color:#6d6f72">${esc(v.sinUpdate)}</p>
+        </div>
+      </section>
+
+      ${v.mostrarCronologia ? `
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Cronología del ciclo</h2>
+            <p style="font-size:0.875rem;color:#6d6f72;text-wrap:pretty">Solo días hábiles (lun 21 sep → vie 2 oct). «Real» = días hábiles de inicio a cierre; «Teórico» = estimación de Linear o días hábiles hasta la fecha límite. «+» = aún abierta.</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem 0.875rem">
+            ${v.leyenda.map(l => `
+              <span style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:#54565a">
+                <span style="width:10px;height:10px;border-radius:3px;display:inline-block;background:${l.color}"></span>${esc(l.label)}
+              </span>`).join("")}
+          </div>
+        </div>
+        <div class="sm-card" style="padding:0.875rem">
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <div style="min-width:680px;display:flex;flex-direction:column;gap:0.5rem;padding-bottom:0.25rem">
+              <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#6d6f72;font-weight:700">
+                <span>Día 1 · ${esc(v.fechaInicio)}</span>
+                <span>Día ${v.totalDias} · ${esc(v.fechaFin)}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:150px 1fr 56px 56px 86px;gap:0.25rem 0.75rem;align-items:center">
+                <span></span>
+                <div style="position:relative;height:6px;border-radius:9999px;background:#dad6d3">
+                  <div style="position:absolute;top:-4px;bottom:-4px;width:2px;background:#cf3b3b;left:${v.hoyLeft}"></div>
+                </div>
+                <span style="font-size:0.6875rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:#6d6f72;text-align:right">Real</span>
+                <span style="font-size:0.6875rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:#6d6f72;text-align:right">Teórico</span>
+                <span></span>
+                ${v.timeline.map(t => `
+                  <span style="font-size:0.8125rem;color:#232527;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(t.full)}">${esc(t.titulo)}</span>
+                  <div style="position:relative;height:22px;border-radius:6px;background:#f7f7f6">
+                    <div style="position:absolute;top:0;bottom:0;width:2px;background:rgba(207,59,59,0.45);left:${v.hoyLeft}"></div>
+                    <div style="position:absolute;top:3px;bottom:3px;display:flex;align-items:center;justify-content:center;padding:0 0.375rem;font-size:0.6875rem;font-weight:700;white-space:nowrap;overflow:hidden;background:${t.fondo};border:${t.borde};color:${t.tinta};left:${t.left};width:${t.width};border-radius:${t.radio}" title="${esc(t.full)}">${esc(t.etiqueta)}</div>
+                  </div>
+                  <span style="font-size:0.75rem;font-weight:700;text-align:right;white-space:nowrap;color:${t.realColor}" title="${esc(t.realTitulo)}">${esc(t.real)}</span>
+                  <span style="font-size:0.75rem;text-align:right;white-space:nowrap;color:${t.teoColor}" title="${esc(t.teoTitulo)}">${esc(t.teorico)}</span>
+                  <span style="font-size:0.75rem;color:#6d6f72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.responsable)}</span>`).join("")}
+                <span></span>
+                <div style="position:relative;height:14px;font-size:0.6875rem;color:#6d6f72">
+                  ${v.ticks.map(d => `<span style="position:absolute;top:0;transform:translateX(-50%);left:${d.left}">${esc(d.label)}</span>`).join("")}
+                </div>
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.25rem;padding-top:0.75rem;margin-top:0.25rem;border-top:1px solid #f0efed">
+            <span style="font-size:0.75rem;color:#6d6f72;line-height:1.45">${esc(v.leyendaRecorte)}</span>
+            <span style="font-size:0.75rem;color:#6d6f72;line-height:1.45;text-wrap:pretty">${esc(v.sinInicioNota)}</span>
+          </div>
+        </div>
+      </section>` : ""}
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.25rem 0.75rem">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Tareas por responsable</h2>
+            <p style="font-size:0.875rem;color:#6d6f72">Mismas métricas para todo el equipo. Meta de resolución: ${esc(v.metaTexto)}.</p>
+          </div>
+          <span style="font-size:0.8125rem;color:#6d6f72">Orden: ${esc(v.ordenTexto)}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0.75rem">
+          ${v.responsables.map(r => `
+            <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.875rem">
+              <div style="display:flex;align-items:center;gap:0.625rem">
+                <span style="width:36px;height:36px;flex:0 0 36px;border-radius:9999px;background:#e3efd2;color:#4c6b21;display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:700">${esc(r.iniciales)}</span>
+                <span style="font-size:1rem;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.nombre)}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;text-align:center">
+                <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#f7f7f6">
+                  <span style="font-size:1.125rem;font-weight:700;line-height:1">${r.planeadas}</span>
+                  <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">Planeadas</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#eaf4e0">
+                  <span style="font-size:1.125rem;font-weight:700;line-height:1;color:#4c8a2a">${r.finalizadas}</span>
+                  <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">Finalizadas</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px;padding:0.5rem 0.25rem;border-radius:8px;background:#e8f0f9">
+                  <span style="font-size:1.125rem;font-weight:700;line-height:1;color:#2f6fb0">${r.curso}</span>
+                  <span style="font-size:0.6875rem;color:#6d6f72;letter-spacing:0.04em;text-transform:uppercase">En curso</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:0.375rem">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem">
+                  <span style="font-size:0.8125rem;color:#54565a">% resolución</span>
+                  <span style="font-size:0.9375rem;font-weight:700;color:${r.resColor}">${r.resolucion}%</span>
+                </div>
+                <div style="position:relative;height:8px;border-radius:9999px;background:#f0efed;overflow:hidden">
+                  <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:${r.resFill};width:${r.resW}"></div>
+                </div>
+                <span style="font-size:0.75rem;color:#6d6f72">Finalizadas ÷ planeadas</span>
+              </div>
+              ${v.mostrarEsfuerzo ? `
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;padding-top:0.75rem;border-top:1px solid #f0efed">
+                <span style="font-size:0.8125rem;color:#54565a">Tareas activas en paralelo</span>
+                <span style="font-size:0.9375rem;font-weight:700">${esc(r.esfuerzo)}</span>
+              </div>
+              <span style="font-size:0.75rem;color:#6d6f72;margin-top:-0.5rem">${r.diasTotales} días-tarea dentro del ciclo ÷ ${v.diaActual} días transcurridos</span>` : ""}
+            </div>`).join("")}
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Top 5 proyectos con más tareas</h2>
+          <p style="font-size:0.875rem;color:#6d6f72">Cantidad de tareas asignadas en el ciclo.</p>
+        </div>
+        <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.875rem">
+          ${v.proyectos.map(p => `
+            <div style="display:flex;flex-direction:column;gap:0.375rem">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem">
+                <span style="font-size:0.875rem;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.nombre)}</span>
+                <span style="font-size:0.875rem;font-weight:700;color:#628a2a">${p.cantidad}</span>
+              </div>
+              <div style="position:relative;height:20px;border-radius:6px;background:#f7f7f6;overflow:hidden">
+                <div style="position:absolute;inset:0 auto 0 0;border-radius:6px;background:#90bf57;width:${p.w}"></div>
+              </div>
+            </div>`).join("")}
+          <span style="font-size:0.75rem;color:#6d6f72">Cantidad de tareas</span>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Salud de datos y proceso</h2>
+          <p style="font-size:0.875rem;color:#6d6f72">Calidad del registro en Linear. Verde = sano; rojo = requiere corrección (poca cobertura o muchos vacíos).</p>
+        </div>
+        <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:1rem">
+          ${v.salud.map(s => `
+            <div style="display:flex;flex-direction:column;gap:0.375rem">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem">
+                <span style="font-size:0.875rem;min-width:0;line-height:1.3">${esc(s.label)}</span>
+                <span style="display:flex;align-items:baseline;gap:0.375rem;white-space:nowrap">
+                  <span style="font-size:0.9375rem;font-weight:700;color:${s.color}">${esc(s.pct)}</span>
+                  <span style="font-size:0.75rem;color:#6d6f72">${esc(s.detalle)}</span>
+                </span>
+              </div>
+              <div style="position:relative;height:8px;border-radius:9999px;background:#f0efed;overflow:hidden">
+                <div style="position:absolute;inset:0 auto 0 0;border-radius:9999px;background:${s.color};width:${s.w}"></div>
+              </div>
+            </div>`).join("")}
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:0.875rem">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <h2 style="font-size:clamp(1rem,3.5vw,1.25rem);font-weight:700;line-height:1.2">Detenidas esperando respuesta</h2>
+          <p style="font-size:0.875rem;color:#6d6f72">${esc(v.detenidasN)} en estado «Esperando respuesta»: el avance depende de un tercero.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.75rem">
+          ${v.detenidas.map(d => `
+            <div class="sm-card" style="padding:1rem;display:flex;flex-direction:column;gap:0.5rem;border-left:4px solid #c9820f">
+              <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.25rem 0.625rem">
+                <span style="font-size:0.75rem;font-weight:700;color:#c9820f">${esc(d.id)}</span>
+                <span style="font-size:0.75rem;font-weight:700;color:#c9820f">${esc(d.dias)}</span>
+              </div>
+              <span style="font-size:0.9375rem;font-weight:700;line-height:1.35;text-wrap:pretty">${esc(d.titulo)}</span>
+              <div style="display:flex;flex-wrap:wrap;gap:0.25rem 0.75rem;font-size:0.75rem;color:#6d6f72;padding-top:0.5rem;border-top:1px solid #f0efed">
+                <span>${esc(d.responsable)}</span>
+                <span>${esc(d.proyecto)}</span>
+                <span>${esc(d.ultima)}</span>
+              </div>
+            </div>`).join("")}
+        </div>
+      </section>
+
+      <p style="font-size:0.75rem;color:#6d6f72;line-height:1.5">Datos extraídos de Linear el ${esc(v.actualizado)} — ciclo 24 del equipo SALUDMIA (21 sep – 5 oct 2026), ${v.totalIssues} tareas. La cronología muestra los 10 días hábiles de la primera y segunda semana (lun 21 sep → vie 2 oct).</p>
+
+    </main>
+  </div>`;
+}
+
+document.getElementById("app").innerHTML = view(renderVals(PROPS));
+</script>
+</body>
+</html>
